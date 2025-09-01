@@ -631,7 +631,7 @@ onMounted(() => {
   const storedUserName = localStorage.getItem("userName");
 
   if (storedUserId) {
-    userId.value = parseInt(storedUserId);
+    userId.value = storedUserId;
   }
   if (storedUserName) {
     userName.value = storedUserName;
