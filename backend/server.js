@@ -25,6 +25,73 @@ app.get("/api/user/:id", (req, res) => {
   });
 });
 
+// Register a new user
+app.post("/api/register", (req, res) => {
+  const { name, email } = req.body;
+
+  // Validate required fields
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and email are required" });
+  }
+
+  // Check if user already exists
+  db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "User with this email already exists" });
+    }
+
+    // Create new user
+    db.query(
+      "INSERT INTO users (name, email) VALUES (?, ?)",
+      [name, email],
+      (err, insertResults) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+
+        // Get the newly created user
+        db.query(
+          "SELECT * FROM users WHERE id = ?",
+          [insertResults.insertId],
+          (err, userResults) => {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            }
+            res.status(201).json(userResults[0]);
+          }
+        );
+      }
+    );
+  });
+});
+
+// Login endpoint
+app.post("/api/login", (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    res.json(results[0]);
+  });
+});
+
 // Get tasks for a user
 app.get("/api/tasks/:userId", (req, res) => {
   const userId = req.params.userId;

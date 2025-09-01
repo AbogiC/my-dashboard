@@ -5,7 +5,7 @@
       isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800',
     ]"
   >
-    <!-- Header with Theme Toggle -->
+    <!-- Header with Theme Toggle and Logout -->
     <header class="mb-8 flex justify-between items-center">
       <div>
         <h1 class="text-3xl font-bold">Personal Dashboard</h1>
@@ -14,19 +14,48 @@
         </p>
       </div>
 
-      <!-- Theme Toggle Button -->
-      <button
-        @click="toggleTheme"
-        :class="[
-          'p-2 rounded-full transition-all duration-300 flex items-center justify-center',
-          isDark
-            ? 'bg-yellow-400 text-gray-900'
-            : 'bg-gray-800 text-yellow-400',
-        ]"
-        :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
-      >
-        <component :is="isDark ? SunIcon : MoonIcon" class="w-6 h-6" />
-      </button>
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-4">
+        <!-- Theme Toggle Button -->
+        <button
+          @click="toggleTheme"
+          :class="[
+            'p-2 rounded-full transition-all duration-300 flex items-center justify-center',
+            isDark
+              ? 'bg-yellow-400 text-gray-900'
+              : 'bg-gray-800 text-yellow-400',
+          ]"
+          :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <component :is="isDark ? SunIcon : MoonIcon" class="w-6 h-6" />
+        </button>
+
+        <!-- Logout Button -->
+        <button
+          @click="handleLogout"
+          :class="[
+            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            isDark
+              ? 'bg-red-600 hover:bg-red-700 text-white'
+              : 'bg-red-500 hover:bg-red-600 text-white',
+          ]"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            ></path>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
     </header>
 
     <!-- Loading State -->
@@ -539,6 +568,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
+import { useRouter } from "vue-router";
 import {
   CalendarIcon,
   ChartBarIcon,
@@ -550,7 +580,9 @@ import {
 } from "@heroicons/vue/24/outline";
 import api from "../services/api";
 
-const userId = ref(2); // Default user ID - in a real app, this would come from authentication
+const router = useRouter();
+
+const userId = ref(null);
 const userName = ref("");
 const newTask = ref("");
 const note = ref("");
@@ -594,6 +626,17 @@ onMounted(() => {
   }
   applyTheme();
 
+  // Get user data from localStorage
+  const storedUserId = localStorage.getItem("userId");
+  const storedUserName = localStorage.getItem("userName");
+
+  if (storedUserId) {
+    userId.value = parseInt(storedUserId);
+  }
+  if (storedUserName) {
+    userName.value = storedUserName;
+  }
+
   // Fetch data from API
   fetchData();
 
@@ -627,6 +670,15 @@ function applyTheme() {
 
 function toggleTheme() {
   isDark.value = !isDark.value;
+}
+
+function handleLogout() {
+  // Clear authentication data
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("userEmail");
+
+  // Redirect to login
+  router.push("/login");
 }
 
 // Format time for display
@@ -775,7 +827,8 @@ async function addEvent() {
   if (
     !newEvent.value.title ||
     !newEvent.value.event_date ||
-    !newEvent.value.event_time
+    !newEvent.value.event_time ||
+    !userId.value
   ) {
     return;
   }
@@ -824,6 +877,12 @@ async function addEvent() {
 
 // Fetch all data from API
 async function fetchData() {
+  if (!userId.value) {
+    console.error("No user ID available");
+    loading.value = false;
+    return;
+  }
+
   try {
     loading.value = true;
 
@@ -908,7 +967,7 @@ async function fetchData() {
 }
 
 async function addTask() {
-  if (newTask.value.trim()) {
+  if (newTask.value.trim() && userId.value) {
     try {
       const response = await api.addTask({
         user_id: userId.value,
@@ -931,6 +990,8 @@ async function addTask() {
 }
 
 async function toggleTaskCompletion(task) {
+  if (!userId.value) return;
+
   try {
     await api.updateTask(task.id, {
       text: task.text,
@@ -945,6 +1006,8 @@ async function toggleTaskCompletion(task) {
 }
 
 async function removeTask(id) {
+  if (!userId.value) return;
+
   try {
     await api.deleteTask(id);
     tasks.value = tasks.value.filter((task) => task.id !== id);
@@ -956,6 +1019,8 @@ async function removeTask(id) {
 }
 
 async function saveNote() {
+  if (!userId.value) return;
+
   try {
     await api.saveNote({
       user_id: userId.value,

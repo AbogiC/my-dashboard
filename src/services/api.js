@@ -11,6 +11,12 @@ export default {
   getUser(id) {
     return api.get(`/user/${id}`);
   },
+  register(userData) {
+    return api.post("/register", userData);
+  },
+  login(credentials) {
+    return api.post("/login", credentials);
+  },
 
   // Task methods
   getTasks(userId) {
