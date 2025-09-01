@@ -321,6 +321,235 @@ app.get("/api/stats/:userId", (req, res) => {
   );
 });
 
+// Get courses for a user
+app.get("/api/courses/:userId", (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    "SELECT * FROM courses WHERE user_id = ? ORDER BY created_at DESC",
+    [userId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(results);
+    }
+  );
+});
+
+// Get a specific course with its lessons
+app.get("/api/courses/:userId/:courseId", (req, res) => {
+  const { userId, courseId } = req.params;
+  db.query(
+    "SELECT * FROM courses WHERE id = ? AND user_id = ?",
+    [courseId, userId],
+    (err, courseResults) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (courseResults.length === 0) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Get lessons for this course
+      db.query(
+        "SELECT * FROM lessons WHERE course_id = ? ORDER BY lesson_order ASC",
+        [courseId],
+        (err, lessonResults) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+
+          const course = courseResults[0];
+          course.lessons = lessonResults;
+          res.json(course);
+        }
+      );
+    }
+  );
+});
+
+// Create a new course
+app.post("/api/courses", (req, res) => {
+  const { user_id, title, description } = req.body;
+
+  if (!user_id || !title) {
+    return res.status(400).json({ error: "User ID and title are required" });
+  }
+
+  db.query(
+    "INSERT INTO courses (user_id, title, description) VALUES (?, ?, ?)",
+    [user_id, title, description || null],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      db.query(
+        "SELECT * FROM courses WHERE id = ?",
+        [results.insertId],
+        (err, courseResults) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+          res.status(201).json(courseResults[0]);
+        }
+      );
+    }
+  );
+});
+
+// Update a course
+app.put("/api/courses/:id", (req, res) => {
+  const courseId = req.params.id;
+  const { title, description } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: "Title is required" });
+  }
+
+  db.query(
+    "UPDATE courses SET title = ?, description = ? WHERE id = ?",
+    [title, description || null, courseId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      res.json({ message: "Course updated successfully" });
+    }
+  );
+});
+
+// Delete a course
+app.delete("/api/courses/:id", (req, res) => {
+  const courseId = req.params.id;
+
+  db.query("DELETE FROM courses WHERE id = ?", [courseId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    res.json({ message: "Course deleted successfully" });
+  });
+});
+
+// Get lessons for a course
+app.get("/api/lessons/:courseId", (req, res) => {
+  const courseId = req.params.courseId;
+  db.query(
+    "SELECT * FROM lessons WHERE course_id = ? ORDER BY lesson_order ASC",
+    [courseId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(results);
+    }
+  );
+});
+
+// Get a specific lesson
+app.get("/api/lessons/:courseId/:lessonId", (req, res) => {
+  const { courseId, lessonId } = req.params;
+  db.query(
+    "SELECT * FROM lessons WHERE id = ? AND course_id = ?",
+    [lessonId, courseId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
+
+      res.json(results[0]);
+    }
+  );
+});
+
+// Create a new lesson
+app.post("/api/lessons", (req, res) => {
+  const { course_id, title, content, lesson_order } = req.body;
+
+  if (!course_id || !title) {
+    return res.status(400).json({ error: "Course ID and title are required" });
+  }
+
+  db.query(
+    "INSERT INTO lessons (course_id, title, content, lesson_order) VALUES (?, ?, ?, ?)",
+    [course_id, title, content || null, lesson_order || 0],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      db.query(
+        "SELECT * FROM lessons WHERE id = ?",
+        [results.insertId],
+        (err, lessonResults) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+          res.status(201).json(lessonResults[0]);
+        }
+      );
+    }
+  );
+});
+
+// Update a lesson
+app.put("/api/lessons/:id", (req, res) => {
+  const lessonId = req.params.id;
+  const { title, content, lesson_order } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: "Title is required" });
+  }
+
+  db.query(
+    "UPDATE lessons SET title = ?, content = ?, lesson_order = ? WHERE id = ?",
+    [title, content || null, lesson_order || 0, lessonId],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
+
+      res.json({ message: "Lesson updated successfully" });
+    }
+  );
+});
+
+// Delete a lesson
+app.delete("/api/lessons/:id", (req, res) => {
+  const lessonId = req.params.id;
+
+  db.query("DELETE FROM lessons WHERE id = ?", [lessonId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: "Lesson not found" });
+    }
+
+    res.json({ message: "Lesson deleted successfully" });
+  });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT} and accessible from network`);
 });

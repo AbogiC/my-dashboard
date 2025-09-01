@@ -282,6 +282,216 @@ class FirebaseDatabase {
       throw error;
     }
   }
+
+  // Course methods
+  async getCourses(userId) {
+    try {
+      const coursesQuery = query(
+        collection(this.db, "courses"),
+        where("user_id", "==", userId),
+        orderBy("created_at", "desc")
+      );
+      const querySnapshot = await getDocs(coursesQuery);
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error getting courses:", error);
+      throw error;
+    }
+  }
+
+  async getPublicCourses(excludeUserId = null) {
+    try {
+      let coursesQuery = query(
+        collection(this.db, "courses"),
+        where("is_public", "==", true),
+        orderBy("created_at", "desc")
+      );
+
+      const querySnapshot = await getDocs(coursesQuery);
+      let courses = [];
+
+      for (const doc of querySnapshot.docs) {
+        const courseData = { id: doc.id, ...doc.data() };
+
+        // Get author name
+        if (courseData.user_id) {
+          try {
+            const userDoc = await getDoc(
+              doc(this.db, "users", courseData.user_id)
+            );
+            if (userDoc.exists()) {
+              courseData.author_name = userDoc.data().name;
+            }
+          } catch (userError) {
+            console.error("Error getting user data:", userError);
+          }
+        }
+
+        // Exclude user's own courses if specified
+        if (!excludeUserId || courseData.user_id !== excludeUserId) {
+          courses.push(courseData);
+        }
+      }
+
+      return courses;
+    } catch (error) {
+      console.error("Error getting public courses:", error);
+      throw error;
+    }
+  }
+
+  async getCourseWithLessons(courseId) {
+    try {
+      const courseDoc = await getDoc(doc(this.db, "courses", courseId));
+      if (!courseDoc.exists()) {
+        return null;
+      }
+
+      const course = { id: courseDoc.id, ...courseDoc.data() };
+
+      // Get lessons for this course
+      const lessonsQuery = query(
+        collection(this.db, "lessons"),
+        where("course_id", "==", courseId),
+        orderBy("lesson_order", "asc")
+      );
+      const lessonsSnapshot = await getDocs(lessonsQuery);
+      course.lessons = lessonsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      return course;
+    } catch (error) {
+      console.error("Error getting course with lessons:", error);
+      throw error;
+    }
+  }
+
+  async addCourse(userId, title, description, isPublic = false) {
+    try {
+      const courseData = {
+        user_id: userId,
+        title,
+        description: description || null,
+        is_public: isPublic,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      };
+      const docRef = await addDoc(collection(this.db, "courses"), courseData);
+      const newCourse = await getDoc(docRef);
+      return { id: newCourse.id, ...newCourse.data() };
+    } catch (error) {
+      console.error("Error adding course:", error);
+      throw error;
+    }
+  }
+
+  async updateCourse(id, title, description, isPublic) {
+    try {
+      const courseRef = doc(this.db, "courses", id);
+      await updateDoc(courseRef, {
+        title,
+        description: description || null,
+        is_public: isPublic,
+        updated_at: serverTimestamp(),
+      });
+      return { message: "Course updated successfully" };
+    } catch (error) {
+      console.error("Error updating course:", error);
+      throw error;
+    }
+  }
+
+  async deleteCourse(id) {
+    try {
+      await deleteDoc(doc(this.db, "courses", id));
+      return { message: "Course deleted successfully" };
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      throw error;
+    }
+  }
+
+  // Lesson methods
+  async getLessons(courseId) {
+    try {
+      const lessonsQuery = query(
+        collection(this.db, "lessons"),
+        where("course_id", "==", courseId),
+        orderBy("lesson_order", "asc")
+      );
+      const querySnapshot = await getDocs(lessonsQuery);
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error("Error getting lessons:", error);
+      throw error;
+    }
+  }
+
+  async getLesson(courseId, lessonId) {
+    try {
+      const lessonDoc = await getDoc(doc(this.db, "lessons", lessonId));
+      if (lessonDoc.exists() && lessonDoc.data().course_id === courseId) {
+        return { id: lessonDoc.id, ...lessonDoc.data() };
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting lesson:", error);
+      throw error;
+    }
+  }
+
+  async addLesson(courseId, title, content, lessonOrder) {
+    try {
+      const lessonData = {
+        course_id: courseId,
+        title,
+        content: content || null,
+        lesson_order: lessonOrder || 0,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      };
+      const docRef = await addDoc(collection(this.db, "lessons"), lessonData);
+      const newLesson = await getDoc(docRef);
+      return { id: newLesson.id, ...newLesson.data() };
+    } catch (error) {
+      console.error("Error adding lesson:", error);
+      throw error;
+    }
+  }
+
+  async updateLesson(id, title, content, lessonOrder) {
+    try {
+      const lessonRef = doc(this.db, "lessons", id);
+      await updateDoc(lessonRef, {
+        title,
+        content: content || null,
+        lesson_order: lessonOrder || 0,
+        updated_at: serverTimestamp(),
+      });
+      return { message: "Lesson updated successfully" };
+    } catch (error) {
+      console.error("Error updating lesson:", error);
+      throw error;
+    }
+  }
+
+  async deleteLesson(id) {
+    try {
+      await deleteDoc(doc(this.db, "lessons", id));
+      return { message: "Lesson deleted successfully" };
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = FirebaseDatabase;

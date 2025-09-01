@@ -4,6 +4,10 @@ import App from "./App.vue";
 import Login from "./components/Login.vue";
 import Register from "./components/Register.vue";
 import Dashboard from "./components/Dashboard.vue";
+import Learning from "./components/Learning.vue";
+import CourseDetail from "./components/CourseDetail.vue";
+import LessonViewer from "./components/LessonViewer.vue";
+import PublicCourses from "./components/PublicCourses.vue";
 import "./style.css";
 
 // Define routes
@@ -26,6 +30,30 @@ const routes = [
     path: "/dashboard",
     name: "Dashboard",
     component: Dashboard,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/learning",
+    name: "Learning",
+    component: Learning,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/public-courses",
+    name: "PublicCourses",
+    component: PublicCourses,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/learning/:id",
+    name: "CourseDetail",
+    component: CourseDetail,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/learning/:courseId/lesson/:lessonId",
+    name: "LessonViewer",
+    component: LessonViewer,
     meta: { requiresAuth: true },
   },
 ];

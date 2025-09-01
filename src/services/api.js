@@ -58,4 +58,41 @@ export default {
   getStats(userId) {
     return api.get(`/stats/${userId}`);
   },
+
+  // Course methods
+  getCourses(userId) {
+    return api.get(`/courses/${userId}`);
+  },
+  getCourse(userId, courseId) {
+    return api.get(`/courses-lesson/${courseId}`);
+  },
+  getPublicCourses() {
+    return api.get("/courses-public");
+  },
+  addCourse(courseData) {
+    return api.post("/courses", courseData);
+  },
+  updateCourse(id, courseData) {
+    return api.put(`/courses/${id}`, courseData);
+  },
+  deleteCourse(id) {
+    return api.delete(`/courses/${id}`);
+  },
+
+  // Lesson methods
+  getLessons(courseId) {
+    return api.get(`/lessons/${courseId}`);
+  },
+  getLesson(courseId, lessonId) {
+    return api.get(`/lessons/${courseId}/${lessonId}`);
+  },
+  addLesson(lessonData) {
+    return api.post("/lessons", lessonData);
+  },
+  updateLesson(id, lessonData) {
+    return api.put(`/lessons/${id}`, lessonData);
+  },
+  deleteLesson(id) {
+    return api.delete(`/lessons/${id}`);
+  },
 };

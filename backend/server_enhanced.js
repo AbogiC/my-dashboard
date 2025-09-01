@@ -232,6 +232,187 @@ app.get("/api/stats/:userId", async (req, res) => {
   }
 });
 
+// Get courses for a user
+app.get("/api/courses/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const courses = await db.getCourses(userId);
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a specific course with its lessons
+app.get("/api/courses-lesson/:courseId", async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await db.getCourseWithLessons(courseId);
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create a new course
+app.post("/api/courses", async (req, res) => {
+  try {
+    const { user_id, title, description, is_public } = req.body;
+
+    if (!user_id || !title) {
+      return res.status(400).json({ error: "User ID and title are required" });
+    }
+
+    const course = await db.addCourse(
+      user_id,
+      title,
+      description,
+      is_public || false
+    );
+    res.status(201).json(course);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a course
+app.put("/api/courses/:id", async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const { title, description, is_public } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    const result = await db.updateCourse(
+      courseId,
+      title,
+      description,
+      is_public
+    );
+    res.json(result);
+  } catch (error) {
+    if (error.message === "Course not found") {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+// Delete a course
+app.delete("/api/courses/:id", async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const result = await db.deleteCourse(courseId);
+    res.json(result);
+  } catch (error) {
+    if (error.message === "Course not found") {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+// Get public courses (available to all users)
+app.get("/api/courses-public", async (req, res) => {
+  try {
+    const courses = await db.getPublicCourses();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get lessons for a course
+app.get("/api/lessons/:courseId", async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const lessons = await db.getLessons(courseId);
+    res.json(lessons);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a specific lesson
+app.get("/api/lessons/:courseId/:lessonId", async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params;
+    const lesson = await db.getLesson(courseId, lessonId);
+    if (!lesson) {
+      return res.status(404).json({ error: "Lesson not found" });
+    }
+    res.json(lesson);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create a new lesson
+app.post("/api/lessons", async (req, res) => {
+  try {
+    const { course_id, title, content, lesson_order } = req.body;
+
+    if (!course_id || !title) {
+      return res
+        .status(400)
+        .json({ error: "Course ID and title are required" });
+    }
+
+    const lesson = await db.addLesson(course_id, title, content, lesson_order);
+    res.status(201).json(lesson);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update a lesson
+app.put("/api/lessons/:id", async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const { title, content, lesson_order } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    const result = await db.updateLesson(
+      lessonId,
+      title,
+      content,
+      lesson_order
+    );
+    res.json(result);
+  } catch (error) {
+    if (error.message === "Lesson not found") {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+// Delete a lesson
+app.delete("/api/lessons/:id", async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const result = await db.deleteLesson(lessonId);
+    res.json(result);
+  } catch (error) {
+    if (error.message === "Lesson not found") {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
+  }
+});
+
 // Database info endpoint
 app.get("/api/database-info", (req, res) => {
   const config = require("./config/database");

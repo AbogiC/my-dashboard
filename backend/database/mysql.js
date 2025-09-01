@@ -176,6 +176,119 @@ class MySQLDatabase {
     return await this.query("SELECT * FROM stats WHERE user_id = ?", [userId]);
   }
 
+  // Course methods
+  async getCourses(userId) {
+    return await this.query(
+      `SELECT c.*, COUNT(l.id) AS total_lessons FROM courses c LEFT JOIN lessons l ON l.course_id = c.id WHERE c.user_id = ${userId} GROUP BY c.id ORDER BY c.created_at DESC;`,
+      [userId]
+    );
+  }
+
+  async getPublicCourses() {
+    let query =
+      "SELECT c.*, u.name as author_name, COUNT(l.id) AS total_lessons FROM courses c JOIN users u ON c.user_id = u.id LEFT JOIN lessons l ON l.course_id = c.id WHERE c.is_public = true GROUP BY c.id ORDER BY c.created_at DESC";
+    let params = [];
+    return await this.query(query, params);
+  }
+
+  async getCourseWithLessons(courseId) {
+    const courseResults = await this.query(
+      "SELECT * FROM courses WHERE id = ?",
+      [courseId]
+    );
+
+    if (courseResults.length === 0) {
+      return null;
+    }
+
+    const course = courseResults[0];
+    const lessonResults = await this.query(
+      "SELECT * FROM lessons WHERE course_id = ? ORDER BY lesson_order ASC",
+      [courseId]
+    );
+
+    course.lessons = lessonResults;
+    return course;
+  }
+
+  async addCourse(userId, title, description, isPublic = false) {
+    const result = await this.query(
+      "INSERT INTO courses (user_id, title, description, is_public) VALUES (?, ?, ?, ?)",
+      [userId, title, description || null, isPublic]
+    );
+    const courseResults = await this.query(
+      "SELECT * FROM courses WHERE id = ?",
+      [result.insertId]
+    );
+    return courseResults[0];
+  }
+
+  async updateCourse(id, title, description, isPublic) {
+    const result = await this.query(
+      "UPDATE courses SET title = ?, description = ?, is_public = ? WHERE id = ?",
+      [title, description || null, isPublic, id]
+    );
+    if (result.affectedRows === 0) {
+      throw new Error("Course not found");
+    }
+    return { message: "Course updated successfully" };
+  }
+
+  async deleteCourse(id) {
+    const result = await this.query("DELETE FROM courses WHERE id = ?", [id]);
+    if (result.affectedRows === 0) {
+      throw new Error("Course not found");
+    }
+    return { message: "Course deleted successfully" };
+  }
+
+  // Lesson methods
+  async getLessons(courseId) {
+    return await this.query(
+      "SELECT * FROM lessons WHERE course_id = ? ORDER BY lesson_order ASC",
+      [courseId]
+    );
+  }
+
+  async getLesson(courseId, lessonId) {
+    const results = await this.query(
+      "SELECT * FROM lessons WHERE id = ? AND course_id = ?",
+      [lessonId, courseId]
+    );
+    return results[0] || null;
+  }
+
+  async addLesson(courseId, title, content, lessonOrder) {
+    const result = await this.query(
+      "INSERT INTO lessons (course_id, title, content, lesson_order) VALUES (?, ?, ?, ?)",
+      [courseId, title, content || null, lessonOrder || 0]
+    );
+    const lessonResults = await this.query(
+      "SELECT * FROM lessons WHERE id = ?",
+      [result.insertId]
+    );
+    return lessonResults[0];
+  }
+
+  async updateLesson(id, title, content, lessonOrder) {
+    const result = await this.query(
+      "UPDATE lessons SET title = ?, content = ?, lesson_order = ? WHERE id = ?",
+      [title, content || null, lessonOrder || 0, id]
+    );
+    if (result.affectedRows === 0) {
+      throw new Error("Lesson not found");
+    }
+    return { message: "Lesson updated successfully" };
+  }
+
+  async deleteLesson(id) {
+    const result = await this.query("DELETE FROM lessons WHERE id = ?", [id]);
+    if (result.affectedRows === 0) {
+      throw new Error("Lesson not found");
+    }
+    return { message: "Lesson deleted successfully" };
+  }
+
   close() {
     this.connection.end();
   }
