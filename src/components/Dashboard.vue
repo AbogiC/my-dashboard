@@ -15,7 +15,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 sm:space-x-4">
         <!-- Theme Toggle Button -->
         <button
           @click="toggleTheme"
@@ -34,7 +34,7 @@
         <button
           @click="$router.push('/learning')"
           :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            'px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
             isDark
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-green-500 hover:bg-green-600 text-white',
@@ -53,14 +53,14 @@
               d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
             ></path>
           </svg>
-          <span>Learning</span>
+          <span class="hidden sm:inline">Learning</span>
         </button>
 
         <!-- Logout Button -->
         <button
           @click="handleLogout"
           :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            'px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
             isDark
               ? 'bg-red-600 hover:bg-red-700 text-white'
               : 'bg-red-500 hover:bg-red-600 text-white',
@@ -79,7 +79,7 @@
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
             ></path>
           </svg>
-          <span>Logout</span>
+          <span class="hidden sm:inline">Logout</span>
         </button>
       </div>
     </header>
@@ -175,7 +175,7 @@
               @keyup.enter="addTask"
               placeholder="Add new task..."
               :class="[
-                'flex-1 rounded-l-lg px-3 py-2 transition-colors duration-300',
+                'flex-1 rounded-l-lg px-2 sm:px-3 py-2 transition-colors duration-300',
                 isDark
                   ? 'bg-gray-700 text-white border-gray-600'
                   : 'border bg-white',
@@ -183,9 +183,22 @@
             />
             <button
               @click="addTask"
-              class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 transition-colors"
+              class="bg-blue-500 text-white px-2 sm:px-4 py-2 rounded-r-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
             >
-              Add
+              <svg
+                class="w-4 h-4 sm:mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                ></path>
+              </svg>
+              <span class="hidden sm:inline">Add</span>
             </button>
           </div>
         </div>
@@ -668,6 +681,44 @@ onMounted(() => {
 
   // Generate initial calendar
   generateCalendarDays();
+
+  // Add logs for debugging responsiveness
+  console.log("Initial window width:", window.innerWidth);
+  window.addEventListener("resize", () => {
+    console.log("Window resized to:", window.innerWidth);
+    // Check if action buttons container is overflowing
+    const actionButtons = document.querySelector(
+      ".flex.items-center.space-x-2"
+    );
+    if (actionButtons) {
+      const containerWidth = actionButtons.offsetWidth;
+      const scrollWidth = actionButtons.scrollWidth;
+      console.log(
+        "Action buttons container width:",
+        containerWidth,
+        "Scroll width:",
+        scrollWidth
+      );
+      if (scrollWidth > containerWidth) {
+        console.log("Action buttons are overflowing!");
+      }
+    }
+    // Check if task input section is overflowing
+    const taskInputSection = document.querySelector(".mt-4.flex");
+    if (taskInputSection) {
+      const containerWidth = taskInputSection.offsetWidth;
+      const scrollWidth = taskInputSection.scrollWidth;
+      console.log(
+        "Task input section container width:",
+        containerWidth,
+        "Scroll width:",
+        scrollWidth
+      );
+      if (scrollWidth > containerWidth) {
+        console.log("Task input section is overflowing!");
+      }
+    }
+  });
 });
 
 // Watch for theme changes

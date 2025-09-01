@@ -15,7 +15,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 sm:space-x-4">
         <!-- Theme Toggle Button -->
         <button
           @click="toggleTheme"
@@ -34,7 +34,7 @@
         <button
           @click="$router.push('/public-courses')"
           :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            'px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
             isDark
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-green-500 hover:bg-green-600 text-white',
@@ -53,14 +53,14 @@
               d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"
             ></path>
           </svg>
-          <span>Public Courses</span>
+          <span class="hidden sm:inline">Public Courses</span>
         </button>
 
         <!-- Back to Dashboard Button -->
         <button
           @click="$router.push('/dashboard')"
           :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            'px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
             isDark
               ? 'bg-gray-600 hover:bg-gray-700 text-white'
               : 'bg-gray-300 hover:bg-gray-400 text-gray-700',
@@ -79,7 +79,7 @@
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             ></path>
           </svg>
-          <span>Dashboard</span>
+          <span class="hidden sm:inline">Dashboard</span>
         </button>
       </div>
     </header>
@@ -469,6 +469,29 @@ onMounted(() => {
   } else {
     loading.value = false;
   }
+
+  // Add logs for debugging responsiveness
+  console.log("Learning.vue - Initial window width:", window.innerWidth);
+  window.addEventListener("resize", () => {
+    console.log("Learning.vue - Window resized to:", window.innerWidth);
+    // Check if action buttons container is overflowing
+    const actionButtons = document.querySelector(
+      ".flex.items-center.space-x-4"
+    );
+    if (actionButtons) {
+      const containerWidth = actionButtons.offsetWidth;
+      const scrollWidth = actionButtons.scrollWidth;
+      console.log(
+        "Learning.vue - Action buttons container width:",
+        containerWidth,
+        "Scroll width:",
+        scrollWidth
+      );
+      if (scrollWidth > containerWidth) {
+        console.log("Learning.vue - Action buttons are overflowing!");
+      }
+    }
+  });
 });
 
 function applyTheme() {
