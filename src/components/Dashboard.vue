@@ -550,7 +550,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import api from "../services/api";
 
-const userId = ref(1); // Default user ID - in a real app, this would come from authentication
+const userId = ref(2); // Default user ID - in a real app, this would come from authentication
 const userName = ref("");
 const newTask = ref("");
 const note = ref("");
