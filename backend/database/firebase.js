@@ -36,6 +36,56 @@ class FirebaseDatabase {
     }
   }
 
+  // Login user
+  async loginUser(email) {
+    try {
+      const usersQuery = query(
+        collection(this.db, "users"),
+        where("email", "==", email)
+      );
+      const querySnapshot = await getDocs(usersQuery);
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return { id: userDoc.id, ...userDoc.data() };
+      }
+      return null; // User not found
+    } catch (error) {
+      console.error("Error logging in user:", error);
+      throw error;
+    }
+  }
+
+  // Register new user
+  async registerUser(name, email) {
+    if (!name || !email) {
+      throw new Error("Name and email are required");
+    }
+    try {
+      // Check if user with the same email already exists
+      const existingUserQuery = query(
+        collection(this.db, "users"),
+        where("email", "==", email)
+      );
+      const querySnapshot = await getDocs(existingUserQuery);
+      if (!querySnapshot.empty) {
+        throw new Error("User with this email already exists");
+      }
+      // Add new user
+      const userData = {
+        name,
+        email,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      };
+      const docRef = await addDoc(collection(this.db, "users"), userData);
+      const newUser = await getDoc(docRef);
+      return { id: newUser.id, ...newUser.data() };
+    } catch (error) {
+      console.error("Error registering user:", error);
+      throw error;
+    }
+  }
+
   // Task methods
   async getTasks(userId) {
     try {
