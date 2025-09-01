@@ -38,6 +38,46 @@ app.get("/api/user/:id", async (req, res) => {
   }
 });
 
+// Register a new user
+app.post("/api/register", async (req, res) => {
+  const { name, email } = req.body;
+
+  try {
+    const user = await db.registerUser(name, email);
+
+    res.json(user);
+  } catch (error) {
+    if (error.message === "User with this email already exists") {
+      return res.status(409).json({ error: error.message });
+    } else if (error.message === "Name and email are required") {
+      return res.status(400).json({ error: error.message });
+    } else {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+});
+
+// Login endpoint
+app.post("/api/login", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    const user = await db.loginUser(email);
+
+    if (user === null) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get tasks for a user
 app.get("/api/tasks/:userId", async (req, res) => {
   try {

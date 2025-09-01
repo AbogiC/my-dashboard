@@ -35,6 +35,43 @@ class MySQLDatabase {
     return results[0] || null;
   }
 
+  // Login user
+  async loginUser(email) {
+    const results = await this.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+    if (results.length > 0) {
+      return results[0]; // User exists, return user data
+    } else {
+      return null; // User not found
+    }
+  }
+
+  // Register new user
+  async registerUser(name, email) {
+    if (!name || !email) {
+      throw new Error("Name and email are required");
+    }
+
+    const existingUser = await this.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
+    if (existingUser.length > 0) {
+      throw new Error("User with this email already exists");
+    }
+
+    const result = await this.query(
+      "INSERT INTO users (name, email) VALUES (?, ?)",
+      [name, email]
+    );
+    const userResults = await this.query("SELECT * FROM users WHERE id = ?", [
+      result.insertId,
+    ]);
+
+    return userResults[0];
+  }
+
   // Task methods
   async getTasks(userId) {
     return await this.query(
