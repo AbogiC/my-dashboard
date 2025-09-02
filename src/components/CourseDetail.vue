@@ -497,12 +497,11 @@ async function saveLesson() {
   try {
     if (editingLesson.value) {
       // Update existing lesson
-      await databaseService.updateLesson(
-        editingLesson.value.id,
-        lessonForm.value.title,
-        lessonForm.value.content,
-        lessonForm.value.lesson_order
-      );
+      await databaseService.updateLesson(editingLesson.value.id, {
+        title: lessonForm.value.title,
+        content: lessonForm.value.content,
+        lesson_order: lessonForm.value.lesson_order,
+      });
       // Update local state
       const index = lessons.value.findIndex(
         (l) => l.id === editingLesson.value.id
@@ -513,12 +512,12 @@ async function saveLesson() {
       alert("Lesson updated successfully!");
     } else {
       // Create new lesson
-      const response = await databaseService.addLesson(
-        course.value.id,
-        lessonForm.value.title,
-        lessonForm.value.content,
-        lessonForm.value.lesson_order
-      );
+      const response = await databaseService.addLesson({
+        course_id: course.value.id,
+        title: lessonForm.value.title,
+        content: lessonForm.value.content,
+        lesson_order: lessonForm.value.lesson_order,
+      });
       lessons.value.push(response);
       alert("Lesson created successfully!");
     }

@@ -558,12 +558,11 @@ async function saveCourse() {
   try {
     if (editingCourse.value) {
       // Update existing course
-      await databaseService.updateCourse(
-        editingCourse.value.id,
-        courseForm.value.title,
-        courseForm.value.description,
-        courseForm.value.is_public
-      );
+      await databaseService.updateCourse(editingCourse.value.id, {
+        title: courseForm.value.title,
+        description: courseForm.value.description,
+        is_public: courseForm.value.is_public,
+      });
       // Update local state
       const index = courses.value.findIndex(
         (c) => c.id === editingCourse.value.id
@@ -574,12 +573,12 @@ async function saveCourse() {
       alert("Course updated successfully!");
     } else {
       // Create new course
-      const response = await databaseService.addCourse(
-        userId.value,
-        courseForm.value.title,
-        courseForm.value.description,
-        courseForm.value.is_public
-      );
+      const response = await databaseService.addCourse({
+        user_id: userId.value,
+        title: courseForm.value.title,
+        description: courseForm.value.description,
+        is_public: courseForm.value.is_public,
+      });
       courses.value.unshift(response);
       alert("Course created successfully!");
     }
