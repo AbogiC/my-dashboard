@@ -114,7 +114,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 const name = ref("");
@@ -140,7 +140,7 @@ const handleRegister = async () => {
   successMessage.value = "";
 
   try {
-    const response = await api.register({
+    const response = await databaseService.register({
       name: name.value,
       email: email.value,
     });

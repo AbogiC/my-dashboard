@@ -113,7 +113,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 const email = ref("");
@@ -137,7 +137,7 @@ const handleLogin = async () => {
   errorMessage.value = "";
 
   try {
-    const response = await api.login({
+    const response = await databaseService.login({
       email: email.value,
     });
 

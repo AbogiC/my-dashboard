@@ -617,7 +617,7 @@ import {
   SunIcon,
   MoonIcon,
 } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 
@@ -919,8 +919,8 @@ async function addEvent() {
       description: newEvent.value.description || null,
     };
 
-    const response = await api.addEvent(eventData);
-    events.value.unshift(response.data);
+    const response = await databaseService.addEvent(eventData);
+    events.value.unshift(response);
 
     // Close modal and show success message
     closeAddEventModal();
@@ -964,24 +964,24 @@ async function fetchData() {
     loading.value = true;
 
     // Fetch user data
-    const userResponse = await api.getUser(userId.value);
-    userName.value = userResponse.data.name || "User";
+    const userResponse = await databaseService.getUser(userId.value);
+    userName.value = userResponse.name || "User";
 
     // Fetch tasks
-    const tasksResponse = await api.getTasks(userId.value);
-    tasks.value = tasksResponse.data;
+    const tasksResponse = await databaseService.getTasks(userId.value);
+    tasks.value = tasksResponse;
 
     // Fetch events
-    const eventsResponse = await api.getEvents(userId.value);
-    events.value = eventsResponse.data;
+    const eventsResponse = await databaseService.getEvents(userId.value);
+    events.value = eventsResponse;
 
     // Fetch stats
-    const statsResponse = await api.getStats(userId.value);
-    stats.value = statsResponse.data;
+    const statsResponse = await databaseService.getStats(userId.value);
+    stats.value = statsResponse;
 
     // Fetch notes
-    const notesResponse = await api.getNotes(userId.value);
-    note.value = notesResponse.data.content || "";
+    const notesResponse = await databaseService.getNotes(userId.value);
+    note.value = notesResponse ? notesResponse.content || "" : "";
   } catch (error) {
     console.error("Error fetching data:", error);
     // Fallback data if API is not available
@@ -1046,11 +1046,11 @@ async function fetchData() {
 async function addTask() {
   if (newTask.value.trim() && userId.value) {
     try {
-      const response = await api.addTask({
+      const response = await databaseService.addTask({
         user_id: userId.value,
         text: newTask.value.trim(),
       });
-      tasks.value.unshift(response.data);
+      tasks.value.unshift(response);
       newTask.value = "";
     } catch (error) {
       console.error("Error adding task:", error);
@@ -1070,7 +1070,7 @@ async function toggleTaskCompletion(task) {
   if (!userId.value) return;
 
   try {
-    await api.updateTask(task.id, {
+    await databaseService.updateTask(task.id, {
       text: task.text,
       completed: !task.completed,
     });
@@ -1086,7 +1086,7 @@ async function removeTask(id) {
   if (!userId.value) return;
 
   try {
-    await api.deleteTask(id);
+    await databaseService.deleteTask(id);
     tasks.value = tasks.value.filter((task) => task.id !== id);
   } catch (error) {
     console.error("Error deleting task:", error);
@@ -1099,7 +1099,7 @@ async function saveNote() {
   if (!userId.value) return;
 
   try {
-    await api.saveNote({
+    await databaseService.saveNote({
       user_id: userId.value,
       content: note.value,
     });

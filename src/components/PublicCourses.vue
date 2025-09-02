@@ -184,7 +184,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { SunIcon, MoonIcon } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 
@@ -232,8 +232,7 @@ async function fetchPublicCourses() {
 
   try {
     loading.value = true;
-    const response = await api.getPublicCourses();
-    courses.value = response.data;
+    courses.value = await databaseService.getPublicCourses();
   } catch (error) {
     console.error("Error fetching public courses:", error);
     courses.value = [];
