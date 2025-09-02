@@ -292,10 +292,24 @@ class FirebaseDatabase {
         orderBy("created_at", "desc")
       );
       const querySnapshot = await getDocs(coursesQuery);
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+
+      // Get total lessons for each course
+      const courses = [];
+      for (const doc of querySnapshot.docs) {
+        const courseData = { id: doc.id, ...doc.data() };
+
+        // Count lessons for this course
+        const lessonsQuery = query(
+          collection(this.db, "lessons"),
+          where("course_id", "==", doc.id)
+        );
+        const lessonsSnapshot = await getDocs(lessonsQuery);
+        courseData.total_lessons = lessonsSnapshot.size;
+
+        courses.push(courseData);
+      }
+
+      return courses;
     } catch (error) {
       console.error("Error getting courses:", error);
       throw error;
@@ -313,8 +327,8 @@ class FirebaseDatabase {
       const querySnapshot = await getDocs(coursesQuery);
       let courses = [];
 
-      for (const doc of querySnapshot.docs) {
-        const courseData = { id: doc.id, ...doc.data() };
+      for (const courseDoc of querySnapshot.docs) {
+        const courseData = { id: courseDoc.id, ...courseDoc.data() };
 
         // Get author name
         if (courseData.user_id) {
@@ -328,6 +342,19 @@ class FirebaseDatabase {
           } catch (userError) {
             console.error("Error getting user data:", userError);
           }
+        }
+
+        // Get total lessons for this course
+        try {
+          const lessonsQuery = query(
+            collection(this.db, "lessons"),
+            where("course_id", "==", courseDoc.id)
+          );
+          const lessonsSnapshot = await getDocs(lessonsQuery);
+          courseData.total_lessons = lessonsSnapshot.size;
+        } catch (lessonError) {
+          console.error("Error getting lesson count:", lessonError);
+          courseData.total_lessons = 0;
         }
 
         // Exclude user's own courses if specified
