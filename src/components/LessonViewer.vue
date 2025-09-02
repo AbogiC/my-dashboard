@@ -249,7 +249,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { SunIcon, MoonIcon } from "@heroicons/vue/24/outline";
 import api from "../services/api";
@@ -283,6 +283,16 @@ onMounted(() => {
     loading.value = false;
   }
 });
+
+// Watch for route changes to re-fetch lesson data
+watch(
+  () => route.params.lessonId,
+  (newLessonId, oldLessonId) => {
+    if (newLessonId && newLessonId !== oldLessonId && userId.value) {
+      fetchLesson();
+    }
+  }
+);
 
 function applyTheme() {
   if (isDark.value) {
