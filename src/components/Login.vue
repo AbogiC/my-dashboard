@@ -144,8 +144,8 @@ const handleLogin = async () => {
     // Set authentication state
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userEmail", email.value);
-    localStorage.setItem("userId", response.data.id);
-    localStorage.setItem("userName", response.data.name);
+    localStorage.setItem("userId", response.id);
+    localStorage.setItem("userName", response.name);
 
     // Redirect to dashboard
     router.push("/dashboard");
