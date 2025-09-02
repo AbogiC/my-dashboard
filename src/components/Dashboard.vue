@@ -395,7 +395,31 @@
           isDark ? 'bg-gray-800' : 'bg-white',
         ]"
       >
-        <h2 class="text-xl font-semibold mb-4">Weather</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Weather</h2>
+          <button
+            @click="fetchWeather"
+            :class="[
+              'p-2 rounded-full transition-colors duration-300',
+              isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
+            ]"
+            :aria-label="'Refresh weather'"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+          </button>
+        </div>
         <div class="flex items-center justify-between">
           <div>
             <p class="text-3xl font-bold">{{ weather.temperature }}°C</p>
@@ -678,6 +702,9 @@ onMounted(() => {
 
   // Fetch data from API
   fetchData();
+
+  // Fetch weather data
+  fetchWeather();
 
   // Generate initial calendar
   generateCalendarDays();
@@ -1040,6 +1067,73 @@ async function fetchData() {
     ];
   } finally {
     loading.value = false;
+  }
+}
+
+// Fetch real-time weather data from WeatherAPI.com
+async function fetchWeather() {
+  const apiKey = import.meta.env.VITE_WEATHERAPI_KEY;
+  if (!apiKey || apiKey === "your_weatherapi_key_here") {
+    console.warn("Weather API key not configured");
+    return;
+  }
+
+  try {
+    const city = "Jakarta"; // Default city, can be made configurable
+    const response = await fetch(
+      `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`
+    );
+
+    if (!response.ok) {
+      throw new Error(`WeatherAPI error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Get current weather data
+    const current = data.current;
+    const location = data.location;
+
+    // Map weather condition to emoji
+    const conditionText = current.condition.text.toLowerCase();
+    let emoji = "☀️"; // default
+
+    if (conditionText.includes("rain") || conditionText.includes("drizzle")) {
+      emoji = "🌧️";
+    } else if (conditionText.includes("snow")) {
+      emoji = "❄️";
+    } else if (conditionText.includes("cloud")) {
+      if (conditionText.includes("partly")) {
+        emoji = "⛅";
+      } else {
+        emoji = "☁️";
+      }
+    } else if (
+      conditionText.includes("clear") ||
+      conditionText.includes("sunny")
+    ) {
+      emoji = "☀️";
+    } else if (
+      conditionText.includes("thunder") ||
+      conditionText.includes("storm")
+    ) {
+      emoji = "⛈️";
+    } else if (
+      conditionText.includes("mist") ||
+      conditionText.includes("fog")
+    ) {
+      emoji = "🌫️";
+    }
+
+    weather.value = {
+      temperature: Math.round(current.temp_c),
+      condition: current.condition.text,
+      location: `${location.name}, ${location.country}`,
+      emoji: emoji,
+    };
+  } catch (error) {
+    console.error("Error fetching weather:", error);
+    // Keep existing static data as fallback
   }
 }
 
