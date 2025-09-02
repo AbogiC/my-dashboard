@@ -389,7 +389,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { SunIcon, MoonIcon } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 const route = useRoute();
@@ -446,9 +446,12 @@ async function fetchCourse() {
 
   try {
     loading.value = true;
-    const response = await api.getCourse(userId.value, route.params.id);
-    course.value = response.data;
-    lessons.value = response.data.lessons || [];
+    const response = await databaseService.getCourse(
+      userId.value,
+      route.params.id
+    );
+    course.value = response;
+    lessons.value = response.lessons || [];
   } catch (error) {
     console.error("Error fetching course:", error);
     course.value = {};
@@ -494,7 +497,11 @@ async function saveLesson() {
   try {
     if (editingLesson.value) {
       // Update existing lesson
-      await api.updateLesson(editingLesson.value.id, lessonForm.value);
+      await databaseService.updateLesson(editingLesson.value.id, {
+        title: lessonForm.value.title,
+        content: lessonForm.value.content,
+        lesson_order: lessonForm.value.lesson_order,
+      });
       // Update local state
       const index = lessons.value.findIndex(
         (l) => l.id === editingLesson.value.id
@@ -505,11 +512,13 @@ async function saveLesson() {
       alert("Lesson updated successfully!");
     } else {
       // Create new lesson
-      const response = await api.addLesson({
+      const response = await databaseService.addLesson({
         course_id: course.value.id,
-        ...lessonForm.value,
+        title: lessonForm.value.title,
+        content: lessonForm.value.content,
+        lesson_order: lessonForm.value.lesson_order,
       });
-      lessons.value.push(response.data);
+      lessons.value.push(response);
       alert("Lesson created successfully!");
     }
     closeLessonModal();
@@ -525,7 +534,7 @@ async function deleteLesson(lessonId) {
   }
 
   try {
-    await api.deleteLesson(lessonId);
+    await databaseService.deleteLesson(lessonId);
     lessons.value = lessons.value.filter((l) => l.id !== lessonId);
     alert("Lesson deleted successfully!");
   } catch (error) {

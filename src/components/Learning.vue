@@ -435,7 +435,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { SunIcon, MoonIcon } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 
@@ -513,8 +513,7 @@ async function fetchCourses() {
 
   try {
     loading.value = true;
-    const response = await api.getCourses(userId.value);
-    courses.value = response.data;
+    courses.value = await databaseService.getCourses(userId.value);
   } catch (error) {
     console.error("Error fetching courses:", error);
     courses.value = [];
@@ -559,7 +558,11 @@ async function saveCourse() {
   try {
     if (editingCourse.value) {
       // Update existing course
-      await api.updateCourse(editingCourse.value.id, courseForm.value);
+      await databaseService.updateCourse(editingCourse.value.id, {
+        title: courseForm.value.title,
+        description: courseForm.value.description,
+        is_public: courseForm.value.is_public,
+      });
       // Update local state
       const index = courses.value.findIndex(
         (c) => c.id === editingCourse.value.id
@@ -570,11 +573,13 @@ async function saveCourse() {
       alert("Course updated successfully!");
     } else {
       // Create new course
-      const response = await api.addCourse({
+      const response = await databaseService.addCourse({
         user_id: userId.value,
-        ...courseForm.value,
+        title: courseForm.value.title,
+        description: courseForm.value.description,
+        is_public: courseForm.value.is_public,
       });
-      courses.value.unshift(response.data);
+      courses.value.unshift(response);
       alert("Course created successfully!");
     }
     closeCourseModal();
@@ -594,7 +599,7 @@ async function deleteCourse(courseId) {
   }
 
   try {
-    await api.deleteCourse(courseId);
+    await databaseService.deleteCourse(courseId);
     courses.value = courses.value.filter((c) => c.id !== courseId);
     alert("Course deleted successfully!");
   } catch (error) {

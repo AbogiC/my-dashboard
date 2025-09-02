@@ -113,7 +113,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 const email = ref("");
@@ -137,15 +137,15 @@ const handleLogin = async () => {
   errorMessage.value = "";
 
   try {
-    const response = await api.login({
+    const response = await databaseService.login({
       email: email.value,
     });
 
     // Set authentication state
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userEmail", email.value);
-    localStorage.setItem("userId", response.data.id);
-    localStorage.setItem("userName", response.data.name);
+    localStorage.setItem("userId", response.id);
+    localStorage.setItem("userName", response.name);
 
     // Redirect to dashboard
     router.push("/dashboard");

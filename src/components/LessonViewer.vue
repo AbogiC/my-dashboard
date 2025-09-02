@@ -252,7 +252,7 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { SunIcon, MoonIcon } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 const route = useRoute();
@@ -315,12 +315,12 @@ async function fetchLesson() {
     loading.value = true;
 
     // Fetch course with lessons
-    const courseResponse = await api.getCourse(
+    const courseResponse = await databaseService.getCourse(
       userId.value,
       route.params.courseId
     );
-    course.value = courseResponse.data;
-    allLessons.value = courseResponse.data.lessons || [];
+    course.value = courseResponse;
+    allLessons.value = courseResponse.lessons || [];
 
     // Find the specific lesson
     const currentLesson = allLessons.value.find(

@@ -395,7 +395,31 @@
           isDark ? 'bg-gray-800' : 'bg-white',
         ]"
       >
-        <h2 class="text-xl font-semibold mb-4">Weather</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Weather</h2>
+          <button
+            @click="fetchWeather"
+            :class="[
+              'p-2 rounded-full transition-colors duration-300',
+              isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
+            ]"
+            :aria-label="'Refresh weather'"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              ></path>
+            </svg>
+          </button>
+        </div>
         <div class="flex items-center justify-between">
           <div>
             <p class="text-3xl font-bold">{{ weather.temperature }}°C</p>
@@ -617,7 +641,7 @@ import {
   SunIcon,
   MoonIcon,
 } from "@heroicons/vue/24/outline";
-import api from "../services/api";
+import databaseService from "../services/databaseService";
 
 const router = useRouter();
 
@@ -678,6 +702,9 @@ onMounted(() => {
 
   // Fetch data from API
   fetchData();
+
+  // Fetch weather data
+  fetchWeather();
 
   // Generate initial calendar
   generateCalendarDays();
@@ -919,8 +946,8 @@ async function addEvent() {
       description: newEvent.value.description || null,
     };
 
-    const response = await api.addEvent(eventData);
-    events.value.unshift(response.data);
+    const response = await databaseService.addEvent(eventData);
+    events.value.unshift(response);
 
     // Close modal and show success message
     closeAddEventModal();
@@ -964,24 +991,24 @@ async function fetchData() {
     loading.value = true;
 
     // Fetch user data
-    const userResponse = await api.getUser(userId.value);
-    userName.value = userResponse.data.name || "User";
+    const userResponse = await databaseService.getUser(userId.value);
+    userName.value = userResponse.name || "User";
 
     // Fetch tasks
-    const tasksResponse = await api.getTasks(userId.value);
-    tasks.value = tasksResponse.data;
+    const tasksResponse = await databaseService.getTasks(userId.value);
+    tasks.value = tasksResponse;
 
     // Fetch events
-    const eventsResponse = await api.getEvents(userId.value);
-    events.value = eventsResponse.data;
+    const eventsResponse = await databaseService.getEvents(userId.value);
+    events.value = eventsResponse;
 
     // Fetch stats
-    const statsResponse = await api.getStats(userId.value);
-    stats.value = statsResponse.data;
+    const statsResponse = await databaseService.getStats(userId.value);
+    stats.value = statsResponse;
 
     // Fetch notes
-    const notesResponse = await api.getNotes(userId.value);
-    note.value = notesResponse.data.content || "";
+    const notesResponse = await databaseService.getNotes(userId.value);
+    note.value = notesResponse ? notesResponse.content || "" : "";
   } catch (error) {
     console.error("Error fetching data:", error);
     // Fallback data if API is not available
@@ -1043,14 +1070,81 @@ async function fetchData() {
   }
 }
 
+// Fetch real-time weather data from WeatherAPI.com
+async function fetchWeather() {
+  const apiKey = import.meta.env.VITE_WEATHERAPI_KEY;
+  if (!apiKey || apiKey === "your_weatherapi_key_here") {
+    console.warn("Weather API key not configured");
+    return;
+  }
+
+  try {
+    const city = "Jakarta"; // Default city, can be made configurable
+    const response = await fetch(
+      `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}&aqi=no`
+    );
+
+    if (!response.ok) {
+      throw new Error(`WeatherAPI error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Get current weather data
+    const current = data.current;
+    const location = data.location;
+
+    // Map weather condition to emoji
+    const conditionText = current.condition.text.toLowerCase();
+    let emoji = "☀️"; // default
+
+    if (conditionText.includes("rain") || conditionText.includes("drizzle")) {
+      emoji = "🌧️";
+    } else if (conditionText.includes("snow")) {
+      emoji = "❄️";
+    } else if (conditionText.includes("cloud")) {
+      if (conditionText.includes("partly")) {
+        emoji = "⛅";
+      } else {
+        emoji = "☁️";
+      }
+    } else if (
+      conditionText.includes("clear") ||
+      conditionText.includes("sunny")
+    ) {
+      emoji = "☀️";
+    } else if (
+      conditionText.includes("thunder") ||
+      conditionText.includes("storm")
+    ) {
+      emoji = "⛈️";
+    } else if (
+      conditionText.includes("mist") ||
+      conditionText.includes("fog")
+    ) {
+      emoji = "🌫️";
+    }
+
+    weather.value = {
+      temperature: Math.round(current.temp_c),
+      condition: current.condition.text,
+      location: `${location.name}, ${location.country}`,
+      emoji: emoji,
+    };
+  } catch (error) {
+    console.error("Error fetching weather:", error);
+    // Keep existing static data as fallback
+  }
+}
+
 async function addTask() {
   if (newTask.value.trim() && userId.value) {
     try {
-      const response = await api.addTask({
+      const response = await databaseService.addTask({
         user_id: userId.value,
         text: newTask.value.trim(),
       });
-      tasks.value.unshift(response.data);
+      tasks.value.unshift(response);
       newTask.value = "";
     } catch (error) {
       console.error("Error adding task:", error);
@@ -1070,7 +1164,7 @@ async function toggleTaskCompletion(task) {
   if (!userId.value) return;
 
   try {
-    await api.updateTask(task.id, {
+    await databaseService.updateTask(task.id, {
       text: task.text,
       completed: !task.completed,
     });
@@ -1086,7 +1180,7 @@ async function removeTask(id) {
   if (!userId.value) return;
 
   try {
-    await api.deleteTask(id);
+    await databaseService.deleteTask(id);
     tasks.value = tasks.value.filter((task) => task.id !== id);
   } catch (error) {
     console.error("Error deleting task:", error);
@@ -1099,7 +1193,7 @@ async function saveNote() {
   if (!userId.value) return;
 
   try {
-    await api.saveNote({
+    await databaseService.saveNote({
       user_id: userId.value,
       content: note.value,
     });
