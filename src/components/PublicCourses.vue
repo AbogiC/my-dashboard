@@ -15,7 +15,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 sm:space-x-4">
         <!-- Theme Toggle Button -->
         <button
           @click="toggleTheme"
@@ -34,7 +34,7 @@
         <button
           @click="$router.push('/learning')"
           :class="[
-            'px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
+            'px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2',
             isDark
               ? 'bg-gray-600 hover:bg-gray-700 text-white'
               : 'bg-gray-300 hover:bg-gray-400 text-gray-700',
@@ -53,7 +53,7 @@
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             ></path>
           </svg>
-          <span>My Courses</span>
+          <span class="hidden sm:inline">My Courses</span>
         </button>
       </div>
     </header>

@@ -175,7 +175,7 @@
               @keyup.enter="addTask"
               placeholder="Add new task..."
               :class="[
-                'flex-1 rounded-l-lg px-2 sm:px-3 py-2 transition-colors duration-300',
+                'flex-1 rounded-l-lg px-2 sm:px-3 md:px-3 py-2 transition-colors duration-300',
                 isDark
                   ? 'bg-gray-700 text-white border-gray-600'
                   : 'border bg-white',
@@ -183,10 +183,10 @@
             />
             <button
               @click="addTask"
-              class="bg-blue-500 text-white px-2 sm:px-4 py-2 rounded-r-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+              class="bg-blue-500 text-white px-2 sm:px-4 md:px-4 py-2 rounded-r-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
             >
               <svg
-                class="w-4 h-4 sm:mr-2"
+                class="w-4 h-4 sm:mr-2 md:mr-0 xl:mr-2"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -198,7 +198,7 @@
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 ></path>
               </svg>
-              <span class="hidden sm:inline">Add</span>
+              <span class="hidden sm:inline md:hidden xl:inline">Add</span>
             </button>
           </div>
         </div>
